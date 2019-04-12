@@ -11,11 +11,12 @@ import java.util.HashMap;
 
 public class RestClient {
     private static ObjectMapper mapper = new ObjectMapper();
-    //TODO change to vm ip or add logic to choose between.
-    private static String uri = "http://localhost:8080/rooms/";
-    //private static String uri = "http://172.16.204.2:8080/rooms/";
+    private  String uri;
     private static RestTemplate restTemplate = new RestTemplate();
 
+    public RestClient(String serverIP, int port){
+        this.uri = "http://" + serverIP + ":" + Integer.toString(port) + "/rooms/";
+    }
     public HashMap<String, HashMap<String, Object>> getAllRooms(){
         String responseEntity = restTemplate.getForObject(uri, String.class);
         TypeReference<HashMap<String,Object>> typeRef = new TypeReference<HashMap<String, Object>>() {};

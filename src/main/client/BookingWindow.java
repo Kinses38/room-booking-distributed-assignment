@@ -40,7 +40,7 @@ public class BookingWindow extends JFrame {
             this.setLocationRelativeTo(null);
             this.setResizable(false);
             clientRequests = requestFactory.generateClientRequests(amountClients);
-            restClient = new RestClient();
+            restClient = new RestClient(serverName, serverPort);
         }
         finally {
             this.serverName = serverName;

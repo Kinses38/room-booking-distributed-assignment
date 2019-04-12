@@ -1,5 +1,3 @@
-import org.springframework.web.server.ServerErrorException;
-
 import java.util.logging.Logger;
 
 public class ClientRequests implements Runnable {
@@ -17,7 +15,7 @@ public class ClientRequests implements Runnable {
         this.day = day;
         this.timeSlot = timeSlot;
         this.requestTime = requestTime;
-        this.restClient = new RestClient();
+        this.restClient = new RestClient("172.16.204.2", 8080);
     }
 
     public int getRequestTime(){
