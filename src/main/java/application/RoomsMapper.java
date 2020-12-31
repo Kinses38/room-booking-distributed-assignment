@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class RoomsMapper {
@@ -26,11 +25,10 @@ public class RoomsMapper {
             e.printStackTrace();
         }
         Rooms classRooms = objectMapper.readValue(jsonFile, Rooms.class);
-        logger.info(classRooms.toString());
         return classRooms;
     }
 
-    public void writeJsonWithObjectMapper(Rooms classRooms) throws IOException
+    public void writeJsonWithObjectMapper(Rooms classRooms)
     {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -40,6 +38,9 @@ public class RoomsMapper {
             if(!jsonFile.exists()){
                 jsonFile = new File("rooms.json");
                 objectMapper.writeValue(jsonFile, classRooms);
+            }
+            else{
+                objectMapper.writerWithDefaultPrettyPrinter().writeValue(jsonFile, classRooms);
             }
         }catch (Exception e){
             e.printStackTrace();

@@ -1,13 +1,12 @@
 package application;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Days {
 
     private String day;
-    //private int [] timeslotCapacity;
-    private HashMap<String, AtomicInteger> timeslotCapacity;
+    private ConcurrentHashMap <String, AtomicInteger> timeslotCapacity;
 
     public String getDay(){
         return day;
@@ -17,7 +16,7 @@ public class Days {
         this.day = day;
     }
 
-    public HashMap<String, AtomicInteger> getTimeslotCapacity()
+    public ConcurrentHashMap<String, AtomicInteger> getTimeslotCapacity()
     {
         return timeslotCapacity;
     }
@@ -27,10 +26,14 @@ public class Days {
         this.timeslotCapacity = timeslotCapacity;
     }
 
-    public HashMap<String, AtomicInteger> updateTimeSlotCapacity(String timeslot)
+    public ConcurrentHashMap<String, AtomicInteger> updateTimeSlotCapacity(String timeslot)
     {
-        HashMap<String, AtomicInteger> newTimeslots = timeslotCapacity;
-        newTimeslots.get(timeslot).getAndDecrement();
+        ConcurrentHashMap<String, AtomicInteger> newTimeslots = timeslotCapacity;
+        newTimeslots.get(timeslot).updateAndGet(capacity -> capacity > 0 ? capacity - 1 : capacity);
         return newTimeslots;
+    }
+
+    public int getTimeSlotCapacityForDay(String timeSlot) {
+        return timeslotCapacity.get(timeSlot).get();
     }
 }

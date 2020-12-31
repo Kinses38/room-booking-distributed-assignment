@@ -1,28 +1,38 @@
 package application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 @RestController
 public class RoomsController {
 
     @Autowired
     private Rooms rooms;
-
+    private RoomsMapper mapper = new RoomsMapper();
+    private static final Logger LOGGER = Logger.getLogger(RoomsController.class.getName());
     /**
      * Returns the entire week timetable for each room in the application.
      * @return
      */
+    @Async
     @RequestMapping(method = RequestMethod.GET, value={"/","/rooms"})
     @ResponseBody
-    public HashMap<String, Room> returnAllRooms(){
-        return rooms.getRooms();
+    public CompletableFuture<HashMap<String, Room>> returnAllRooms(){
+        try{
+            rooms = mapper.readJsonWithObjectMapper();
+            return CompletableFuture.completedFuture(rooms.getRooms());
+        }catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -30,13 +40,18 @@ public class RoomsController {
      * @param roomID
      * @return
      */
+    @Async
     @RequestMapping(method = RequestMethod.GET, value ="/rooms/{roomID}")
     @ResponseBody
-    public Room returnRoom(@PathVariable String roomID){
-        return rooms.getRoom(roomID);
+    public CompletableFuture<Room> returnRoom(@PathVariable String roomID){
+        try{
+            rooms = mapper.readJsonWithObjectMapper();
+            return CompletableFuture.completedFuture(rooms.getRoom(roomID));
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return null;
     }
-
-    //TODO revisit converting to map instead of arrays.
 
     /**
      * Filter by roomID and day to return the timetable for that entire day.
@@ -44,10 +59,18 @@ public class RoomsController {
      * @param day
      * @return
      */
+    @Async
     @RequestMapping(method = RequestMethod.GET, value = "/rooms/{roomID}/{day}")
     @ResponseBody
-    public Object returnDay(@PathVariable String roomID,@PathVariable int day){
-        return rooms.returnDay(roomID, day);
+    public CompletableFuture<Object> returnDay(@PathVariable String roomID,@PathVariable int day){
+        try {
+            rooms = mapper.readJsonWithObjectMapper();
+            return CompletableFuture.completedFuture(rooms.returnDay(roomID, day));
+        }catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
@@ -60,19 +83,33 @@ public class RoomsController {
      * @param time
      * @return
      */
-    @RequestMapping(method = RequestMethod.PUT, value = "/rooms/{roomID}/{day}/{time}")
+    @Async
+    @RequestMapping(method = RequestMethod.PUT, value = "/rooms/{roomID}/{day}/{time}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public HashMap<String, Room> bookDay(@PathVariable String roomID, @PathVariable int day, @PathVariable String time){
-        //TODO Protect
-        //TODO Logic for checking
+    public CompletableFuture<Room> bookDay(@RequestBody String bookingRequest,
+                                           @PathVariable String roomID,
+                                           @PathVariable int day,
+                                           @PathVariable String time){
         RoomsMapper mapper = new RoomsMapper();
         rooms.updateBooking(roomID,day,time);
-        try {
-            mapper.writeJsonWithObjectMapper(rooms);
-        }catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-        return rooms.getRooms();
+        mapper.writeJsonWithObjectMapper(rooms);
+        LOGGER.info(bookingRequest);
+
+        return CompletableFuture.completedFuture(rooms.getRoom(roomID));
+    }
+
+    /**
+     * Returns the if a room is available.
+     * @return Boolean
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/rooms/{roomID}/{day}/{time}")
+    @ResponseBody
+    public boolean roomAvailableAtSpecificTime(@PathVariable String roomID, @PathVariable int day, @PathVariable String time){
+        return rooms.getRoom(roomID)
+                .getDays()
+                .get(day)
+                .getTimeSlotCapacityForDay(time) > 0;
     }
 }
+
+
